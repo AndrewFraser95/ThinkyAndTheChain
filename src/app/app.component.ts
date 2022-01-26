@@ -44,6 +44,7 @@ export class AppComponent {
   ];
 
   errorMessage: string = '';
+  computeTime: string = '';
   @Input() starterWord: string = 'N/A';
   @Input() destinationWord: string = 'N/A';
   @Input() wordLength = this.wordLengths[0].value;
@@ -77,6 +78,8 @@ export class AppComponent {
     let lowestLength = 100;
     let bestChain: string[] = [];
 
+    var startTime = performance.now();
+
     // typeOfSearch is a loop counter for how many to perform
     for (let index = 0; index < this.typeOfSearch; index++) {
       const path = this.createPathBetweenWords();
@@ -86,9 +89,12 @@ export class AppComponent {
         lowestLength = path.length;
         bestChain = path;
       }
+      console.log('New shortest journey');
+      console.log(bestChain);
     }
-    console.log("New shortest journey")
-    console.log(bestChain);
+
+    var endTime = performance.now();
+    this.computeTime = `${endTime - startTime} ms`
     this.globalPathSteps = bestChain;
   }
 
