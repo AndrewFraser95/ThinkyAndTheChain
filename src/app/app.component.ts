@@ -80,15 +80,14 @@ export class AppComponent {
     // typeOfSearch is a loop counter for how many to perform
     for (let index = 0; index < this.typeOfSearch; index++) {
       const path = this.createPathBetweenWords();
-      console.log('pathy')
-      console.log(path.length);
       console.log(lowestLength);
-      if (lowestLength > 1 && path.length <= lowestLength) {
-        console.log('innars');
+      console.log(path.length);
+      if (path.length > 1 && path.length <= lowestLength) {
         lowestLength = path.length;
         bestChain = path;
       }
     }
+    console.log("New shortest journey")
     console.log(bestChain);
     this.globalPathSteps = bestChain;
   }
@@ -165,15 +164,11 @@ export class AppComponent {
         });
         // if (wordsWithScore === [newWordsWithScore[0]]) exceptionOccured = true;
         wordsWithScore = [newWordsWithScore[0]];
-        //hacky hack hack
-        if (wordsWithScore[0].word === 'ivy') wordsWithScore = [{ word: 'ice', score: 0}] as WordScore[];
       } while (pathCompleted == false && exceptionOccured == false);
       if (this.pathSteps.length > 1) {
         this.pathSteps = this.optimiseList(this.pathSteps);
       }
     }
-    console.log('outside of loop');
-    console.log(this.pathSteps);
     if (exceptionOccured) {
       this.errorMessage = 'These two words do not link in this dictionary';
     }
@@ -264,9 +259,7 @@ export class AppComponent {
   }
 
   optimiseList(finalList: string[]) {
-    console.log(finalList)
     // If in the final list, any of the words are bridgeable, remove redundant words inbetween
-
     // Bridging will only work on lists more than 3 words longs
     if (finalList.length > 3) {
       for (let index = 0; index < finalList.length + 1; index++) {
