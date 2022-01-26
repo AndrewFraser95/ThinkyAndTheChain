@@ -16,20 +16,13 @@ interface WordScore {
   styleUrls: ['./app.component.less'],
 })
 export class AppComponent {
-  @Input() starterWord: string = 'N/A';
-  @Input() destinationWord: string = 'N/A';
-  // @Input() typeOfSearch: number = 'N/A';
-
-  startingCharacterCount = 3;
   dictionary: string[] = [];
   dictionaryAtLength: string[] = [];
-  starterWords: string[] = [];
-  destinationWords: string[] = [];
+  wordsWithCorrectCount: string[] = [];
+  globalPathSteps: string[] = ['a', 'hop', 'a', 'skip', 'and', 'a', 'jump'];
   pathSteps: string[] = ['a', 'hop', 'a', 'skip', 'and', 'a', 'jump'];
-  alphabet: string[] = [];
-  loopAllowance = 1000;
+  alphabet: string[] = createAlphabet();
 
-  title = 'thinkyAndTheChain';
   wordLengths: UserInput[] = [
     { value: 3, viewValue: 'Three' },
     { value: 4, viewValue: 'Four' },
@@ -50,12 +43,16 @@ export class AppComponent {
     { value: 25, viewValue: 'Slow' },
   ];
 
+  errorMessage: string = '';
+  @Input() starterWord: string = 'N/A';
+  @Input() destinationWord: string = 'N/A';
   @Input() wordLength = this.wordLengths[0].value;
   @Input() typeOfSearch = this.typesOfSearch[0].value;
 
+  // On page load, initialise dictionary
   async ngOnInit() {
     this.dictionary = await getDictionary();
-    this.getWordListForLength(3);
+    this.getWordListForLength(this.wordLength);
   }
 
   async getWordListForLength(newCount: number) {
@@ -63,60 +60,51 @@ export class AppComponent {
       this.dictionary,
       newCount
     );
-    this.starterWords = dictionaryForWordLength;
-    this.destinationWords = dictionaryForWordLength;
+    this.wordsWithCorrectCount = dictionaryForWordLength;
     this.dictionaryAtLength = dictionaryForWordLength;
   }
 
-  onStarterSearch(event: Event, isStarterWord: boolean) {
+  onChangeSearch(event: Event) {
     const searchTerm = (event.target as HTMLInputElement).value;
-    const reducedList = this.search(searchTerm);
-    isStarterWord
-      ? (this.starterWords = reducedList)
-      : (this.destinationWords = reducedList);
+    const reducedList = search(searchTerm, this.dictionaryAtLength);
+    this.wordsWithCorrectCount = reducedList;
   }
 
-  search(searchTerm: string) {
-    let filter = searchTerm.toLowerCase();
-    const tempDictionary = this.dictionaryAtLength;
-    return tempDictionary.filter((option) =>
-      option.toLowerCase().startsWith(filter)
-    );
-  }
-
+  // Without undoing all the work and creating a tree of words
+  // "Neural-netting" the solution by bruteforcing it, is the
+  // sad outcome of the "Type" of search
   createPathBruteforce() {
     let lowestLength = 100;
     let bestChain: string[] = [];
+
+    // typeOfSearch is a loop counter for how many to perform
     for (let index = 0; index < this.typeOfSearch; index++) {
       const path = this.createPathBetweenWords();
-      if (path.length < lowestLength) {
+      console.log('pathy')
+      console.log(path.length);
+      console.log(lowestLength);
+      if (lowestLength > 1 && path.length <= lowestLength) {
+        console.log('innars');
         lowestLength = path.length;
         bestChain = path;
       }
     }
-    this.pathSteps = bestChain;
+    console.log(bestChain);
+    this.globalPathSteps = bestChain;
   }
 
-  // Check to see if a word exists which is 1 character off
-  // Collect all words that are one off the first.
-  // Prioritise words by score e.g. each correct letter
-  // If no clean winner, shuffle.
-  // In that order create the new word.
-  // Loop
   createPathBetweenWords(): string[] {
     var pathCompleted = false;
     const startWord = this.starterWord;
     const destinationWord = this.destinationWord;
-    const alpha = Array.from(Array(26)).map((e, i) => i + 65);
-    this.alphabet = alpha.map((x) => String.fromCharCode(x).toLowerCase());
-
-    this.pathSteps = [];
-    this.pathSteps.push(startWord);
 
     let exceptionOccured = false;
     let alreadyTraversed: string[] = [];
     let wordsWithScore: WordScore[] = [{ word: startWord, score: 0 }];
     let anchorWordsWithScore: WordScore[] = [{ word: startWord, score: 0 }];
+    this.pathSteps = [];
+    this.pathSteps.push(startWord);
+
     if (startWord !== 'N/A' && destinationWord !== 'N/A') {
       do {
         let newWordsWithScore: WordScore[] = [];
@@ -124,47 +112,41 @@ export class AppComponent {
 
         wordsWithScore.forEach((wordWithScore) => {
           newWordsWithScore = [];
-          if (wordWithScore != undefined) {
-            const wordsOneOff = this.createAdjacentWordsList(wordWithScore.word);
-            if (wordsOneOff == []) exceptionOccured = true;
-            wordsOneOff.forEach((x) =>
-              newWordsWithScore.push(this.giveWordScore(x, destinationWord))
-            );
-          } else {
+          if (wordWithScore == undefined) {
+            exceptionOccured = true;
+          }
+          const wordsOneOff = this.createAdjacentWordsList(wordWithScore.word);
+          if (wordsOneOff.length == 0) {
             exceptionOccured = true;
           }
 
-          newWordsWithScore.sort((a, b) => {
-            return b.score - a.score;
-          });
+          newWordsWithScore = this.giveWordScoreAndSort(
+            wordsOneOff,
+            newWordsWithScore
+          );
 
-          if (newWordsWithScore.length > 0) {
-            const tempFirstWordScore = newWordsWithScore[0].score;
-            const areAllScoresTheSame = newWordsWithScore.every(
-              (word: WordScore) => {
-                return word.score == tempFirstWordScore;
-              }
-            );
-
-            if (areAllScoresTheSame) {
-              newWordsWithScore = shuffleArray(newWordsWithScore);
-            }
-          } else {
+          newWordsWithScore =
+            this.shuffleWordOrderIfNoClearWinner(newWordsWithScore);
+          if (newWordsWithScore.length == 0) {
             exceptionOccured = true;
           }
 
-          //It's roughly here I need to check the scores to see if progress has been made
-          //If not, we need to go back a word to the next word, if available.
+          // It's roughly here I need to check the scores to see if progress has been made
+          // If not, we need to go back a word to the next word, if available.
           if (
             newWordsWithScore.length <= 1 ||
             newWordsWithScore[0].score <= anchorWordTopScore
           ) {
             newWordsWithScore = anchorWordsWithScore;
-            this.pathSteps.pop();
+            if (this.pathSteps.length > 1) {
+              this.pathSteps.pop();
+            } else {
+              exceptionOccured = true;
+            }
           }
 
           if (
-            newWordsWithScore != [] &&
+            newWordsWithScore.length > 0 &&
             newWordsWithScore.some((x: WordScore) => x.word === destinationWord)
           ) {
             pathCompleted = true;
@@ -174,42 +156,46 @@ export class AppComponent {
           newWordsWithScore = newWordsWithScore.filter((x: WordScore) => {
             return alreadyTraversed.includes(x.word) == false;
           });
-          let highestValueWord = '';
-          if (newWordsWithScore != undefined && newWordsWithScore.length > 0) {
-            highestValueWord = newWordsWithScore[0].word;
-          } else {
-            newWordsWithScore = anchorWordsWithScore;
-          }
 
-          if (alreadyTraversed.includes(highestValueWord)) {
-            // This exception occured may be too harsh
-            newWordsWithScore.length > 0
-              ? (highestValueWord = newWordsWithScore[1].word)
-              : exceptionOccured = true;
-          } else {
-            if (highestValueWord.length > 0) {
-              alreadyTraversed.push(highestValueWord);
-            }
-            if (highestValueWord.length > 0) {
-              this.pathSteps.push(highestValueWord);
-            }
-          }
+          newWordsWithScore = this.markWordsAlreadyTraversed(
+             newWordsWithScore,
+             anchorWordsWithScore,
+             alreadyTraversed
+           );
         });
+        // if (wordsWithScore === [newWordsWithScore[0]]) exceptionOccured = true;
         wordsWithScore = [newWordsWithScore[0]];
-
+        //hacky hack hack
+        if (wordsWithScore[0].word === 'ivy') wordsWithScore = [{ word: 'ice', score: 0}] as WordScore[];
       } while (pathCompleted == false && exceptionOccured == false);
-      this.pathSteps = this.optimiseList(this.pathSteps);
+      if (this.pathSteps.length > 1) {
+        this.pathSteps = this.optimiseList(this.pathSteps);
+      }
     }
-
+    console.log('outside of loop');
+    console.log(this.pathSteps);
     if (exceptionOccured) {
-      this.pathSteps = ['These two words do not link in this dictionary'];
+      this.errorMessage = 'These two words do not link in this dictionary';
     }
     if (startWord == 'N/A') {
-      this.pathSteps = ['Please choose a starter word'];
+      this.errorMessage = 'Please choose a starter word';
     } else if (destinationWord == 'N/A') {
-      this.pathSteps = ['Please choose a destination word'];
+      this.errorMessage = 'Please choose a destination word';
     }
     return this.pathSteps;
+  }
+
+  giveWordScoreAndSort(
+    wordsOneOff: WordScore[],
+    newWordsWithScore: WordScore[]
+  ): WordScore[] {
+    wordsOneOff.forEach((x) =>
+      newWordsWithScore.push(this.giveWordScore(x, this.destinationWord))
+    );
+    newWordsWithScore.sort((a, b) => {
+      return b.score - a.score;
+    });
+    return newWordsWithScore;
   }
 
   giveWordScore(inputWordScore: WordScore, destinationWord: string): WordScore {
@@ -221,6 +207,46 @@ export class AppComponent {
       }
     }
     return { word: inputWord, score: score };
+  }
+
+  shuffleWordOrderIfNoClearWinner(newWordsWithScore: WordScore[]): WordScore[] {
+    if (newWordsWithScore.length > 0) {
+      const tempFirstWordScore = newWordsWithScore[0].score;
+      const areAllScoresTheSame = newWordsWithScore.every((word: WordScore) => {
+        return word.score == tempFirstWordScore;
+      });
+
+      if (areAllScoresTheSame) {
+        newWordsWithScore = shuffleArray(newWordsWithScore);
+      }
+    }
+    return newWordsWithScore;
+  }
+
+  markWordsAlreadyTraversed(
+    newWordsWithScore: WordScore[],
+    anchorWordsWithScore: WordScore[],
+    alreadyTraversed: string[]
+  ): WordScore[] {
+    let highestValueWord = '';
+    if (newWordsWithScore != undefined && newWordsWithScore.length > 0) {
+      highestValueWord = newWordsWithScore[0].word;
+    } else {
+      newWordsWithScore = anchorWordsWithScore;
+    }
+
+    if (alreadyTraversed.includes(highestValueWord)) {
+      highestValueWord = newWordsWithScore[1].word;
+      // newWordsWithScore.length > 0
+      //   ? (highestValueWord = newWordsWithScore[1].word)
+      //   : (exceptionOccured = true);
+    } else {
+      if (highestValueWord.length > 0) {
+        alreadyTraversed.push(highestValueWord);
+        this.pathSteps.push(highestValueWord);
+      }
+    }
+    return newWordsWithScore;
   }
 
   createAdjacentWordsList(inputWord: string): WordScore[] {
@@ -238,6 +264,7 @@ export class AppComponent {
   }
 
   optimiseList(finalList: string[]) {
+    console.log(finalList)
     // If in the final list, any of the words are bridgeable, remove redundant words inbetween
 
     // Bridging will only work on lists more than 3 words longs
@@ -276,6 +303,10 @@ export class AppComponent {
 }
 
 // Helpers
+function createAlphabet(): string[] {
+  const alpha = Array.from(Array(26)).map((e, i) => i + 65);
+  return alpha.map((x) => String.fromCharCode(x).toLowerCase());
+}
 
 async function getDictionary(): Promise<string[]> {
     var dictionary = fetch('/assets/dictionary.txt')
@@ -290,7 +321,15 @@ async function getDictionaryAtWordLength(dictionary: string[], wordLength: numbe
     return dictionary.filter((x: string) => x.length == wordLength)
 }
 
-  /* Randomize array in-place using Durstenfeld shuffle algorithm */
+function search(searchTerm: string, dictionaryAtLength: string[]) {
+  let filter = searchTerm.toLowerCase();
+  const tempDictionary = dictionaryAtLength;
+  return tempDictionary.filter((option) =>
+    option.toLowerCase().startsWith(filter)
+  );
+}
+
+/* Randomize array in-place using Durstenfeld shuffle algorithm */
 function shuffleArray(wordScoreArray: WordScore[]): WordScore[] {
     if (wordScoreArray != undefined) {
       for (var i = wordScoreArray.length - 1; i > 0; i--) {

@@ -4,28 +4,28 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 # Introduction
 
-Ideally I would sanitise the data by ordering it by length, but I think in this scenario it would be potentially cheating.
+Run `npm run start` and then navigate to `http://localhost:4200/` in your browser of choice.
+- You can then choose word length
+- Starting word
+- Destination word
+And finally 
+- What type of search.
 
-## Development server
+Then just click "Create Path"
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+## The main idea
+- Check to see if a word exists which is 1 character off
+- Collect all words that are one off the first.
+- Prioritise words by score e.g. each correct letter
+- If no clean winner, shuffle.
+- In that order create the new word.
+- Loop
 
-## Code scaffolding
+## Personal Notes
+Ideally I would sanitise the dictionary by ordering it by length, but I think in this scenario it would be potentially cheating.
+The code is also currently massively underperformant and the UX is pants. But evening time is fleeting.
+If you click the Create path button too quickly, the page ocassionally crashes
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
-
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+# To do
+Having some trouble when the word ivy is reached.
+As it's 1 word back is icy, ice, ire. So my chain to go back to a functioning work needs fixing
