@@ -9,23 +9,28 @@ Run `npm run start` and then navigate to `http://localhost:4200/` in your browse
 - Starting word
 - Destination word
 And finally 
-- What type of search.
+- What type of search (for longer words you will want a more indepth search).
 
-Then just click "Create Path"
+Then just click "Find Word Chain"
 
 ## The main idea
-- Check to see if a word exists which is 1 character off
-- Collect all words that are one off the first.
+- Trying to traverse the word list, giving scores to adjacent words, like a neural network would do, learning links, could be interesting.
+
+### More indepth plan.
+- Collect all words that are one character different from starting word.
 - Prioritise words by score e.g. each correct letter
 - If no clean winner, shuffle.
-- In that order create the new word.
-- Loop
+- For the highest priority word, add to "used" list
+- Then discover it's adjacent words
+- Loop until all linked words are "used" or until chain is complete.
+- Simplify chain where possible
 
 ## Personal Notes
-Ideally I would sanitise the dictionary by ordering it by length, but I think in this scenario it would be potentially cheating.
-The code is also currently massively underperformant and the UX is pants. But evening time is fleeting.
-If you click the Create path button too quickly, the page ocassionally crashes
+- Hindsight, means that a tree pruning algorithm would have been a lot better
+- The code is also currently massively underperformant and the UX is pants.
 
-# To do
-Having some trouble when the word ivy is reached.
-As it's 1 word back is icy, ice, ire. So my chain to go back to a functioning work needs fixing
+# Bugs
+- Still doesn't always find the best chain
+- Sometimes randomly the short searches will find a better route than longer searches.
+- If you click the "Find Word Chain" button too quickly, the page ocassionally crashes.
+- Jump count often just says "( jumps)" which should be handled in html and hidden when empty

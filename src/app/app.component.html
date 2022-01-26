@@ -11,13 +11,13 @@
   <h1>Please choose a word length</h1>
   <mat-form-field>
     <mat-label>Word Length: </mat-label>
-    <mat-select [(value)]="wordLength" (selectionChange)="getWordListForLength($event.value)">
-      <mat-option *ngFor="let characterCount of wordLengths" [value]="characterCount.value">
+    <mat-select [(value)]="characterCount" (selectionChange)="getWordListForLength($event.value)">
+      <mat-option *ngFor="let characterCount of characterCounts" [value]="characterCount.value">
         {{characterCount.viewValue}}
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <p>You have selected: {{wordLength}}</p>
+  <p>You have selected: {{characterCount}}</p>
   <br>
 
   <h1>Please choose a starter word</h1>
@@ -59,15 +59,13 @@
   <br>
 
 
-  <button mat-raised-button (click)="createPathBruteforce()">Create path</button>
-  <h3>{{errorMessage}}</h3>
-  <h3>Computing took: {{computeTime}}</h3>
-
+  <button mat-raised-button (click)="findWordChain()">Find Word Chain</button>
   <hr>
-  <h1>The route taken</h1>
+  <h1>The route taken in {{computeTime}}. ({{currentLowestJumpCount}} jumps)</h1>
   <ol>
     <li *ngFor="let step of globalPathSteps;">{{step}}</li>
   </ol>
+  <h3 class="errorMessage">{{errorMessage}}</h3>
 
   <svg id="clouds" xmlns="http://www.w3.org/2000/svg" width="2611.084" height="485.677" viewBox="0 0 2611.084 485.677">
     <title>Gray Clouds Background</title>
