@@ -10,13 +10,7 @@ interface WordScore {
   score: number;
 }
 
-@Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.less'],
-})
-export class AppComponent {
-  characterCounts: UserInput[] = [
+const characterCounts: UserInput[] = [
     { value: 3, viewValue: 'Three' },
     { value: 4, viewValue: 'Four' },
     { value: 5, viewValue: 'Five' },
@@ -30,17 +24,27 @@ export class AppComponent {
     { value: 13, viewValue: 'Thirteen' },
   ];
 
-  typesOfSearch: UserInput[] = [
+const typesOfSearch: UserInput[] = [
+    { value: 0, viewValue: 'Default accuracy' },
     { value: 1, viewValue: 'Low accuracy' },
     { value: 8, viewValue: 'Medium accuracy' },
     { value: 15, viewValue: 'High accuracy' },
     { value: 30, viewValue: 'Shortest chain' },
   ];
 
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.less'],
+})
+export class AppComponent {
+  scopedCharacterCounts = characterCounts;
+  scopedTypesOfSearch = typesOfSearch;
+
   @Input() starterWord: string = 'N/A';
   @Input() destinationWord: string = 'N/A';
-  @Input() characterCount = this.characterCounts[0].value;
-  @Input() typeOfSearch = this.typesOfSearch[0].value;
+  @Input() characterCount = this.scopedCharacterCounts[0].value;
+  @Input() typeOfSearch = this.scopedTypesOfSearch[0].value;
 
   dictionary: string[] = [];
   dictionaryAtLength: string[] = [];
@@ -68,6 +72,12 @@ export class AppComponent {
     var startTime = performance.now();
     this.computeTime = 'TBC';
     this.errorMessage = '';
+
+    // Where automatic type of search, dynamically choose depth by word length
+    this.typeOfSearch = automaticTypeOfSearch(
+      this.typeOfSearch,
+      this.starterWord.length
+    );
 
     // typeOfSearch is a loop counter for how many to perform
     for (let index = 0; index < this.typeOfSearch; index++) {
@@ -359,6 +369,12 @@ async function getDictionary(): Promise<string[]> {
       .then(data => { return data });
     const wordList = await dictionary;
   return wordList.split('\n').map(word => word.trim().replace("-", "")).filter(x => x !="");
+}
+
+function automaticTypeOfSearch(typeOfSearch: number, wordLength: number): number {
+  if (typeOfSearch !== 0) return typeOfSearch;
+  if (wordLength === 3) return typesOfSearch[1].value;
+  return wordLength === 4 ? typesOfSearch[2].value : typesOfSearch[3].value;
 }
 
 /* Filter elements in dictionary by WordLength */

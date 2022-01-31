@@ -12,7 +12,7 @@
   <mat-form-field>
     <mat-label>Word Length: </mat-label>
     <mat-select [(value)]="characterCount" (selectionChange)="getWordListForLength($event.value)">
-      <mat-option *ngFor="let characterCount of characterCounts" [value]="characterCount.value">
+      <mat-option *ngFor="let characterCount of scopedCharacterCounts" [value]="characterCount.value">
         {{characterCount.viewValue}}
       </mat-option>
     </mat-select>
@@ -50,7 +50,7 @@
   <mat-form-field>
     <mat-label>Search type: </mat-label>
     <mat-select [(value)]="typeOfSearch">
-      <mat-option *ngFor="let typeOfSearch of typesOfSearch" [value]="typeOfSearch.value">
+      <mat-option *ngFor="let typeOfSearch of scopedTypesOfSearch" [value]="typeOfSearch.value">
         {{typeOfSearch.viewValue}}
       </mat-option>
     </mat-select>
